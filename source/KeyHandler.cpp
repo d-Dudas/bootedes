@@ -1,11 +1,17 @@
 #include "KeyHandler.hpp"
 
-#include <iostream>
-#include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <stdexcept>
 #include <sstream>
 #include <iomanip>
+#include <cstdint>
+
+namespace
+{
+constexpr std::uint8_t firstKeyLenght{8u};
+constexpr std::uint8_t secondKeyLenght{16u};
+constexpr std::uint8_t thirdKeyLenght{8u};
+} // namespace
 
 namespace keyHandler
 {
@@ -17,17 +23,17 @@ KeyHandler::KeyHandler(const std::string& key)
 
 std::string KeyHandler::getFirstKey() const
 {
-    return key.substr(0, 8);
+    return key.substr(0, firstKeyLenght);
 }
 
 std::string KeyHandler::getSecondKey() const
 {
-    return key.substr(8, 16);
+    return key.substr(firstKeyLenght, secondKeyLenght);
 }
 
 std::string KeyHandler::getThirdKey() const
 {
-    return key.substr(24, 8);
+    return key.substr(firstKeyLenght + secondKeyLenght, thirdKeyLenght);
 }
 
 void KeyHandler::hashKey()
@@ -52,7 +58,7 @@ void KeyHandler::hashKey()
     }
 
     unsigned char hash[EVP_MAX_MD_SIZE];
-    unsigned int hash_len = 0;
+    unsigned int hash_len{0u};
 
     if (EVP_DigestFinal_ex(context, hash, &hash_len) != 1)
     {
@@ -62,7 +68,7 @@ void KeyHandler::hashKey()
 
     EVP_MD_CTX_free(context);
     std::ostringstream oss;
-    for (unsigned int i = 0; i < 16; ++i)
+    for (unsigned int i{0u}; i < 16; ++i)
     {
         oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
     }

@@ -12,11 +12,16 @@ constexpr std::uint8_t success{0};
 constexpr std::uint8_t failure{1};
 const std::string firstProcessOutput{"tmp.first"};
 const std::string secondProcessOutput{"tmp.second"};
+
+bool deleteTemporaryFiles()
+{
+    return not (std::remove(firstProcessOutput.c_str()) != 0 or std::remove(secondProcessOutput.c_str()) != 0);
+}
 } // namespace
 
 int main(int argc, char* argv[])
 {
-    IOConfig config;
+    IOConfig config{};
     OptionParser parser(argc, argv, config);
 
     if (not parser.validateOptions())
@@ -44,10 +49,5 @@ int main(int argc, char* argv[])
             return failure;
     }
 
-    if (std::remove(firstProcessOutput.c_str()) != 0 or std::remove(secondProcessOutput.c_str()) != 0)
-    {
-        return failure;
-    }
-
-    return success;
+    return deleteTemporaryFiles() ? success : failure;
 }

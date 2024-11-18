@@ -1,5 +1,7 @@
 #include <getopt.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include "OptionParser.hpp"
 
@@ -18,20 +20,13 @@ OptionParser::OptionParser(int argc, char** argv, IOConfig& ioConfig)
 
 void OptionParser::printUsage() const
 {
-    const std::string programName = argv[0];
+    const std::string programName{argv[0]};
     std::cout << "Usage: " << programName
-              << "[-(d/e) <inputfile>] [-o <outputfile>] [-p "
+              << " [-(d/e) <inputfile>] [-o <outputfile>] [-p "
                  "<passphrase>] [-k <keyfile>]\n";
-    std::cout << "Types: [\"des\", \"aes_128\", \"aes_192\", \"aes_256\", \"rsa\"]\n";
 
-    std::cout << "\nExample for RSA key generation:\n";
-    std::cout << programName << " -t rsa -k keyfile\n";
-
-    std::cout << "\nExample for RSA encryption:\n";
-    std::cout << programName << " -t rsa -e inputfile [-o outputfile] -k keyfile\n";
-
-    std::cout << "\nExample for AES encryption:\n";
-    std::cout << programName << " -t aes_128 -e inputfile [-o outputfile] -p passphrase\n";
+    std::cout << "\nExample for encryption:\n";
+    std::cout << programName << " -e inputfile [-o outputfile] -p passphrase\n";
 }
 
 bool OptionParser::hasKeyFile() const
@@ -49,7 +44,7 @@ bool OptionParser::hasInputFile() const
     return not ioConfig.inputFile.empty();
 }
 
-bool OptionParser::validateOptions()
+bool OptionParser::readOptions()
 {
     int opt;
     while ((opt = getopt(argc, argv, "d:e:o:p:k:h")) != -1)
@@ -96,6 +91,31 @@ bool OptionParser::validateOptions()
         }
     }
 
+    return validOptions;
+}
+
+void OptionParser::readPasswordFromKeyFile()
+{
+    std::ifstream keyFileStream(ioConfig.keyFile);
+    if (keyFileStream)
+    {
+        std::stringstream buffer;
+        buffer << keyFileStream.rdbuf();
+        ioConfig.password = buffer.str();
+    }
+    else
+    {
+        std::cerr << "Error: Unable to open key file: " << ioConfig.keyFile << std::endl;
+    }
+}
+
+bool OptionParser::validateOptions()
+{
+    if (not readOptions())
+    {
+        return invalidOptions;
+    }
+
     if (ioConfig.outputFile.empty())
     {
         ioConfig.outputFile = ioConfig.inputFile + ".out";
@@ -105,6 +125,11 @@ bool OptionParser::validateOptions()
     {
         printUsage();
         return invalidOptions;
+    }
+
+    if (hasKeyFile())
+    {
+        readPasswordFromKeyFile();
     }
 
     if (not hasPassword())

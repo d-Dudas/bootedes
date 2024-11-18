@@ -10,6 +10,8 @@ public:
 
 private:
     void printUsage() const;
+    bool readOptions();
+    void readPasswordFromKeyFile();
     bool isDES() const;
     bool isAES() const;
     bool isRSA() const;
