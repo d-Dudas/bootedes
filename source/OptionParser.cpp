@@ -81,7 +81,7 @@ bool OptionParser::readOptions()
             case 'h':
             {
                 printUsage();
-                return validOptions;
+                return invalidOptions;
             }
             default:
             {
